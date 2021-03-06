@@ -1,4 +1,6 @@
 import time
+import urllib
+
 import requests
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
@@ -6,7 +8,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 app = Flask(__name__)
 
 # set this to your openweathermap api key
-api_key = "YOUR KEY HERE"
+api_key = "YOUR_KEY"
 
 base_url = "http://api.openweathermap.org/data/2.5/weather?"
 city_name = "Waterloo"
@@ -22,6 +24,8 @@ def sms_reply():
     complete_url = base_url + "appid=" + api_key + "&q=" + city_name
     response = requests.get(complete_url)
     x = response.json()
+
+    print(incoming_msg)
 
     # return the weather
     if "weather" in incoming_msg:
@@ -50,8 +54,21 @@ def sms_reply():
         responded = True
 
     if not responded:
-        msg.body("I don't know this command yet!")
+        msg.body(ask_wolfram(question=incoming_msg))
     return str(resp)
+
+
+def ask_wolfram(question) -> str:
+    appid = "YOUR_KEY"
+    query = urllib.parse.quote_plus(question)
+    query_url = f"http://api.wolframalpha.com/v1/result?" \
+                f"appid={appid}" \
+                f"&input={query}" \
+                f"&format=plaintext"
+
+    r = requests.get(query_url)
+    print(r.text)
+    return r.text
 
 
 if __name__ == "__main__":
